@@ -1,5 +1,3 @@
-import {parseDate} from 'https://deno.land/std@v0.53.0/datetime/mod.ts';
-
 function localDateToUTC(d: Date) {
   return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
 }
@@ -7,14 +5,13 @@ function localDateToUTC(d: Date) {
 function main(date1: string, date2?: string) {
   let start: Date;
   let end: Date;
-  const DATE_FORMAT = 'yyyy-mm-dd';
 
   if (date2 === undefined) {
     start = localDateToUTC(new Date());
-    end = localDateToUTC(parseDate(date1, DATE_FORMAT));
+    end = new Date(Date.parse(date1));
   } else {
-    start = localDateToUTC(parseDate(date1, DATE_FORMAT));
-    end = localDateToUTC(parseDate(date2, DATE_FORMAT));
+    start = new Date(Date.parse(date1));
+    end = new Date(Date.parse(date2));
   }
 
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
