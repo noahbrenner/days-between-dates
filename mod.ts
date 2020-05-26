@@ -27,7 +27,7 @@ function parseDate(isoDate: string) {
   return new Date(timestamp);
 }
 
-function main(date1: string, date2?: string) {
+export function daysBetweenDates(date1: string, date2?: string) {
   let start: Date;
   let end: Date;
 
@@ -44,17 +44,4 @@ function main(date1: string, date2?: string) {
   const days_elapsed = ms_elapsed / MS_PER_DAY;
 
   return days_elapsed;
-}
-
-if (import.meta.main) {
-  try {
-    console.log(main('2020-01-01'));
-  } catch (error) {
-    if (error instanceof DateParseError) {
-      console.error(error.message);
-      Deno.exit(1);
-    } else {
-      throw error;
-    }
-  }
 }
