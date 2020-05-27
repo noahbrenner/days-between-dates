@@ -9,6 +9,10 @@ function localDateToUTC(d: Date) {
   return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
 }
 
+function utcDateToISOString(d: Date) {
+  return d.toISOString().slice(0, 10);
+}
+
 function parseDate(isoDate: string) {
   const isoDatePattern = /^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/;
 
@@ -40,8 +44,12 @@ export function daysBetweenDates(date1: string, date2?: string) {
   }
 
   const MS_PER_DAY = 1000 * 60 * 60 * 24;
-  const ms_elapsed = end.getTime() - start.getTime();
-  const days_elapsed = ms_elapsed / MS_PER_DAY;
+  const msElapsed = end.getTime() - start.getTime();
+  const daysElapsed = msElapsed / MS_PER_DAY;
 
-  return days_elapsed;
+  return {
+    days: daysElapsed,
+    startDate: utcDateToISOString(start),
+    endDate: utcDateToISOString(end),
+  };
 }

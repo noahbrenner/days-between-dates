@@ -32,9 +32,10 @@ function main(args: string[]): CLIOutput {
     };
   }
 
-  let days: number;
+  let result;
+
   try {
-    days = daysBetweenDates(...args as [string, string?]);
+    result = daysBetweenDates(...args as [string, string?]);
   } catch (error) {
     if (error instanceof DateParseError) {
       return {
@@ -46,8 +47,10 @@ function main(args: string[]): CLIOutput {
     }
   }
 
+  const {days, startDate, endDate} = result;
+
   return {
-    message: `${days} days`,
+    message: `${startDate} – ${endDate}: ${days} days`,
     exitCode: 0,
   };
 }
