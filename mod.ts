@@ -43,9 +43,9 @@ export function daysBetweenDates(date1: string, date2?: string) {
     end = parseDate(date2);
   }
 
-  const MS_PER_DAY = 1000 * 60 * 60 * 24;
+  const MS_IN_DAY = 1000 * 60 * 60 * 24;
   const msElapsed = end.getTime() - start.getTime();
-  const daysElapsed = msElapsed / MS_PER_DAY;
+  const daysElapsed = msElapsed / MS_IN_DAY;
 
   return {
     days: daysElapsed,
