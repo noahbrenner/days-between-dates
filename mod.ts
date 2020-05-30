@@ -5,15 +5,15 @@ export class DateParseError extends Error {
   }
 }
 
-function localDateToUTC(d: Date) {
+export function localDateToUTC(d: Date) {
   return new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
 }
 
-function utcDateToISOString(d: Date) {
+export function utcDateToISOString(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-function parseDate(isoDate: string) {
+export function parseDate(isoDate: string) {
   const isoDatePattern = /^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/;
 
   if (!isoDatePattern.test(isoDate)) {
