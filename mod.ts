@@ -14,21 +14,30 @@ export function utcDateToISOString(d: Date) {
 }
 
 export function parseDate(isoDate: string) {
-  const isoDatePattern = /^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/;
+  const re = /^(?<year>[0-9]{4})-(?<month>[0-1][0-9])-(?<day>[0-3][0-9])$/;
+  const parsed = re.exec(isoDate);
 
-  if (!isoDatePattern.test(isoDate)) {
+  if (parsed === null) {
     throw new DateParseError(
       `Invalid date format: "${isoDate}". Please specify as "yyyy-mm-dd"`
     );
   }
 
-  const timestamp = Date.parse(isoDate);
+  const year = Number(parsed.groups!.year);
+  const month = Number(parsed.groups!.month) - 1;
+  const day = Number(parsed.groups!.day);
+  const date = new Date(Date.UTC(year, month, day));
 
-  if (isNaN(timestamp)) {
+  // Catch `Date` bug: `Date.UTC(2020, 0, 32) === Date.UTC(2020, 1, 1)`
+  if (
+    date.getUTCDate() !== day ||
+    date.getUTCMonth() !== month ||
+    date.getUTCFullYear() !== year
+  ) {
     throw new DateParseError(`Invalid date: "${isoDate}"`);
   }
 
-  return new Date(timestamp);
+  return date;
 }
 
 export function daysBetweenDates(date1: string, date2?: string) {

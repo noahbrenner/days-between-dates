@@ -38,9 +38,10 @@ const INVALID_DATE_FORMATS: string[] = [
   ' ',
 
   // The following are invalid dates that *seem* to have the right format,
-  // but they're caught by the RegEx test before calling Date.parse()
+  // but they're caught by the RegExp test before constructing a Date object
   '2020-20-01',
   '2020-01-40',
+  '2020-99-99',
 ];
 
 const INVALID_DATES: string[] = [
@@ -52,6 +53,8 @@ const INVALID_DATES: string[] = [
   // Values too high
   '2020-13-01',
   '2020-01-32',
+  '2020-02-30', // Leap year
+  '2019-02-29', // Non-leap year
 ];
 
 Deno.test('localDateToUTC', () => {
