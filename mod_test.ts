@@ -221,8 +221,10 @@ Deno.test('daysBetweenDates [2 args] daylight saving', () => {
  */
 (() => {
   function isoString(date: Date, dayOffset: number = 0) {
-    const newDate = new Date(date.valueOf());
-    newDate.setDate(newDate.getDate() + dayOffset);
+    const newDate = new Date(
+      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
+    );
+    newDate.setUTCDate(newDate.getUTCDate() + dayOffset);
     const newDateISO = newDate.toISOString().slice(0, 10); // 'yyyy-mm-dd'
     return newDateISO;
   }
