@@ -1,5 +1,7 @@
 export {
   assert,
   assertEquals,
+  assertStrictEquals,
   assertThrows,
-} from 'https://deno.land/std@0.53.0/testing/asserts.ts';
+  fail,
+} from 'https://deno.land/std@0.57.0/testing/asserts.ts';
