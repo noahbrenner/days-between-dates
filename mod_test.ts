@@ -1,8 +1,8 @@
 import {
   assert,
   assertEquals,
-  assertThrows
-} from 'https://deno.land/std@0.53.0/testing/asserts.ts';
+  assertThrows,
+} from './deps_dev.ts';
 import {
   DateParseError,
   daysBetweenDates,
