@@ -1,6 +1,7 @@
 import {
   assert,
   assertEquals,
+  assertStrictEquals,
   assertThrows,
 } from './deps_dev.ts';
 import {
@@ -72,17 +73,17 @@ Deno.test('localDateToUTC strips time', () => {
 
   const local = new Date();
   const utc = localDateToUTC(local);
-  assertEquals(utc.getUTCFullYear(), local.getFullYear());
-  assertEquals(utc.getUTCMonth(), local.getMonth());
-  assertEquals(utc.getUTCDate(), local.getDate());
-  assertEquals(utc.getUTCHours(), 0);
-  assertEquals(utc.getUTCMinutes(), 0);
-  assertEquals(utc.getUTCSeconds(), 0);
-  assertEquals(utc.getUTCMilliseconds(), 0);
+  assertStrictEquals(utc.getUTCFullYear(), local.getFullYear());
+  assertStrictEquals(utc.getUTCMonth(), local.getMonth());
+  assertStrictEquals(utc.getUTCDate(), local.getDate());
+  assertStrictEquals(utc.getUTCHours(), 0);
+  assertStrictEquals(utc.getUTCMinutes(), 0);
+  assertStrictEquals(utc.getUTCSeconds(), 0);
+  assertStrictEquals(utc.getUTCMilliseconds(), 0);
 });
 
 Deno.test('utcDateToISOString', () => {
-  assertEquals(
+  assertStrictEquals(
     utcDateToISOString(new Date('2020-01-01')),
     '2020-01-01'
   );
