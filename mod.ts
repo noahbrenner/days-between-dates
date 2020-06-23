@@ -13,7 +13,7 @@ export function utcDateToISOString(d: Date) {
   return d.toISOString().slice(0, 10);
 }
 
-export function parseDate(isoDate: string) {
+export function parseDateToUTC(isoDate: string) {
   const re = /^(?<year>[0-9]{4})-(?<month>[0-1][0-9])-(?<day>[0-3][0-9])$/;
   const parsed = re.exec(isoDate);
 
@@ -40,25 +40,40 @@ export function parseDate(isoDate: string) {
   return date;
 }
 
-export function daysBetweenDates(date1: string, date2?: string) {
+export function findDateRange(localNow: Date, date1: string, date2?: string) {
   let start: Date;
   let end: Date;
 
   if (date2 === undefined) {
-    start = localDateToUTC(new Date());
-    end = parseDate(date1);
+    // If only one date is passed, treat it as the end date
+    // and use `localNow` as the fallback start date
+    start = localDateToUTC(localNow);
+    end = parseDateToUTC(date1);
   } else {
-    start = parseDate(date1);
-    end = parseDate(date2);
+    start = parseDateToUTC(date1);
+    end = parseDateToUTC(date2);
   }
 
+  return [start, end] as [Date, Date];
+}
+
+export function daysElapsed([start, end]: [Date, Date]) {
   const MS_IN_DAY = 1000 * 60 * 60 * 24;
   const msElapsed = end.getTime() - start.getTime();
-  const daysElapsed = msElapsed / MS_IN_DAY;
+  const days = msElapsed / MS_IN_DAY;
+  return {start, end, days};
+}
 
-  return {
-    days: daysElapsed,
-    startDate: utcDateToISOString(start),
-    endDate: utcDateToISOString(end),
-  };
+export function datesToISOStrings(
+  {start, end, days}: {start: Date, end: Date, days: number}
+) {
+  const startISO = utcDateToISOString(start);
+  const endISO = utcDateToISOString(end);
+  return {startISO, endISO, days};
+}
+
+export function daysBetweenDates(date1: string, date2?: string) {
+  return datesToISOStrings(daysElapsed(
+    findDateRange(new Date(), date1, date2)
+  ));
 }
