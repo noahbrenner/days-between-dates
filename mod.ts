@@ -41,20 +41,13 @@ export function parseDateToUTC(isoDate: string) {
 }
 
 export function findDateRange(localNow: Date, date1: string, date2?: string) {
-  let start: Date;
-  let end: Date;
+  const dateRange: [Date, Date] = date2 === undefined
+    // 1 date passed: Use it as the end date, use `localNow` as the start date
+    ? [localDateToUTC(localNow), parseDateToUTC(date1)]
+    // 2 dates passed: Use them as endpoints, ignore `localNow`
+    : [date1, date2].map(parseDateToUTC) as [Date, Date];
 
-  if (date2 === undefined) {
-    // If only one date is passed, treat it as the end date
-    // and use `localNow` as the fallback start date
-    start = localDateToUTC(localNow);
-    end = parseDateToUTC(date1);
-  } else {
-    start = parseDateToUTC(date1);
-    end = parseDateToUTC(date2);
-  }
-
-  return [start, end] as [Date, Date];
+  return dateRange;
 }
 
 export function daysElapsed([start, end]: [Date, Date]) {
