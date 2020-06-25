@@ -1,62 +1,17 @@
 import {
-  assert,
   assertEquals,
   assertStrictEquals,
   assertThrows,
 } from './deps_dev.ts';
 import {
   DateParseError,
-  daysBetweenDates,
+  datesToISOStrings,
+  daysElapsed,
+  findDateRange,
   localDateToUTC,
-  parseDate,
+  parseDateToUTC,
   utcDateToISOString,
 } from './mod.ts';
-
-const INVALID_DATE_FORMATS: string[] = [
-  // Extra/missing digits
-  '2020-01-001',
-  '2020-001-01',
-  '02020-01-01',
-  '999-01-01',
-
-  // Extra characters
-  ' 2020-01-01',
-  '2020-01-01 ',
-  '\n2020-01-01',
-  '2020-01-01\n',
-
-  // Unsupported formats
-  '2020-01-01T00:00:00.000Z',
-  'Wed Jan 01 2020 00:00:00 GMT-0000',
-  '1/1/2020',
-  '01/01/2020',
-  '1/1/2020',
-  '1-1-2020',
-  '01-01-2020',
-
-  // Edge cases
-  '',
-  ' ',
-
-  // The following are invalid dates that *seem* to have the right format,
-  // but they're caught by the RegExp test before constructing a Date object
-  '2020-20-01',
-  '2020-01-40',
-  '2020-99-99',
-];
-
-const INVALID_DATES: string[] = [
-  // Values too low
-  '2020-00-00',
-  '2020-01-00',
-  '2020-00-01',
-
-  // Values too high
-  '2020-13-01',
-  '2020-01-32',
-  '2020-02-30', // Leap year
-  '2019-02-29', // Non-leap year
-];
 
 Deno.test('localDateToUTC', () => {
   assertEquals(
@@ -84,269 +39,231 @@ Deno.test('localDateToUTC strips time', () => {
 
 Deno.test('utcDateToISOString', () => {
   assertStrictEquals(
-    utcDateToISOString(new Date('2020-01-01')),
+    utcDateToISOString(new Date(Date.UTC(2020, 0, 1))),
     '2020-01-01'
+  );
+  assertStrictEquals(
+    utcDateToISOString(new Date(Date.UTC(999, 0, 1))),
+    '0999-01-01'
   );
 });
 
-Deno.test('parseDate', () => {
+Deno.test('parseDateToUTC', () => {
   assertEquals(
-    parseDate('2020-01-01'),
+    parseDateToUTC('2020-01-01'),
     new Date('2020-01-01')
   );
   assertEquals(
-    parseDate('0999-01-01'),
+    parseDateToUTC('0999-01-01'),
     new Date('0999-01-01')
   );
 });
 
-Deno.test('parseDate throws (invalid format)', () => {
-  for (const date of INVALID_DATE_FORMATS) {
+Deno.test('parseDateToUTC throws (invalid format)', () => {
+  const invalidDateFormats: string[] = [
+    // Extra/missing digits
+    '2020-01-001',
+    '2020-001-01',
+    '02020-01-01',
+    '999-01-01',
+
+    // Extra characters
+    ' 2020-01-01',
+    '2020-01-01 ',
+    '\n2020-01-01',
+    '2020-01-01\n',
+
+    // Unsupported formats
+    '2020-01-01T00:00:00.000Z',
+    'Wed Jan 01 2020 00:00:00 GMT-0000',
+    '1/1/2020',
+    '01/01/2020',
+    '1/1/2020',
+    '1-1-2020',
+    '01-01-2020',
+
+    // Edge cases
+    '',
+    ' ',
+
+    // The following are invalid dates that *seem* to have the right format,
+    // but they're caught by the RegExp test before constructing a Date object
+    '2020-20-01',
+    '2020-01-40',
+    '2020-99-99',
+  ];
+
+  for (const date of invalidDateFormats) {
     assertThrows(
       () => {
-        parseDate(date)
+        parseDateToUTC(date)
       },
       DateParseError,
       'Invalid date format:',
-      `parseDate('${date}')`
+      `parseDateToUTC('${date}')`
     );
   }
 });
 
-Deno.test('parseDate throws (invalid date)', () => {
-  for (const date of INVALID_DATES) {
+Deno.test('parseDateToUTC throws (invalid date)', () => {
+  const invalidDates: string[] = [
+    // Values too low
+    '2020-00-00',
+    '2020-01-00',
+    '2020-00-01',
+
+    // Values too high
+    '2020-13-01',
+    '2020-01-32',
+    '2020-02-30', // Leap year
+    '2019-02-29', // Non-leap year
+  ];
+
+  for (const date of invalidDates) {
     assertThrows(
       () => {
-        parseDate(date)
+        parseDateToUTC(date)
       },
       DateParseError,
       'Invalid date:',
-      `parseDate('${date}')`
+      `parseDateToUTC('${date}')`
     );
   }
 });
 
-Deno.test('daysBetweenDates [2 args] same day', () => {
-  assertEquals(
-    daysBetweenDates('2020-01-01', '2020-01-01'),
-    {
-      days: 0,
-      startDate: '2020-01-01',
-      endDate: '2020-01-01',
-    }
+Deno.test('findDateRange [3 args] chronological', () => {
+  const [start, end] = findDateRange(
+    new Date(2020, 0, 1), // Ignored: 3 args are passed to `findDateRange`
+    '2020-01-02',
+    '2020-01-03'
+  );
+  assertEquals(start, new Date(Date.UTC(2020, 0, 2)));
+  assertEquals(end, new Date(Date.UTC(2020, 0, 3)));
+});
+
+Deno.test('findDateRange [3 args] reverse chronological', () => {
+  const [start, end] = findDateRange(
+    new Date(2020, 0, 3), // Ignored: 3 args are passed to `findDateRange`
+    '2020-01-02',
+    '2020-01-01'
+  );
+  // Dates are not sorted, so they can go backwards in time
+  assertEquals(start, new Date(Date.UTC(2020, 0, 2)));
+  assertEquals(end, new Date(Date.UTC(2020, 0, 1)));
+});
+
+Deno.test('findDateRange [2 args] chronological', () => {
+  const [start, end] = findDateRange(
+    new Date(2020, 0, 1),
+    '2020-01-02',
+  );
+  assertEquals(start, new Date(Date.UTC(2020, 0, 1))); // local -> UTC
+  assertEquals(end, new Date(Date.UTC(2020, 0, 2)));
+});
+
+Deno.test('findDateRange [2 args] reverse chronological', () => {
+  const [start, end] = findDateRange(
+    new Date(2020, 0, 2),
+    '2020-01-01',
+  );
+  // Dates are not sorted, so they can go backwards in time
+  assertEquals(start, new Date(Date.UTC(2020, 0, 2))); // local -> UTC
+  assertEquals(end, new Date(Date.UTC(2020, 0, 1)));
+});
+
+Deno.test('findDateRange throws for invalid dates', () => {
+  // This test isn't exhaustive, it just verifies that the errors thrown by
+  // `parseDateToUTC` are propagated
+  assertThrows(
+    () => {
+      findDateRange(new Date(), '2020-02-30');
+    },
+    DateParseError,
+    'Invalid date:',
+    "findDateRange(new Date(), '2020-02-30')"
+  );
+  assertThrows(
+    () => {
+      findDateRange(new Date(), '2020-02-01', '2020-02-30');
+    },
+    DateParseError,
+    'Invalid date:',
+    "findDateRange(new Date(), '2020-02-01', '2020-02-30')"
   );
 });
 
-Deno.test('daysBetweenDates [2 args] future date', () => {
-  assertEquals(
-    daysBetweenDates('2020-01-01', '2020-01-02'),
-    {
-      days: 1,
-      startDate: '2020-01-01',
-      endDate: '2020-01-02',
-    }
-  );
+Deno.test('daysElapsed returns Date objects unmodified', () => {
+  const date1 = new Date(2020, 0, 1);
+  const date2 = new Date(Date.UTC(2020, 0, 2));
+  const timestamp1 = date1.getTime();
+  const timestamp2 = date2.getTime();
+
+  const {start, end} = daysElapsed([date1, date2]);
+
+  // Same objects
+  assertStrictEquals(start, date1);
+  assertStrictEquals(end, date2);
+
+  // Unmodified values
+  assertStrictEquals(start.getTime(), timestamp1);
+  assertStrictEquals(end.getTime(), timestamp2);
 });
 
-Deno.test('daysBetweenDates [2 args] past date', () => {
-  assertEquals(
-    daysBetweenDates('2020-01-01', '2019-12-31'),
-    {
-      days: -1,
-      startDate: '2020-01-01',
-      endDate: '2019-12-31',
-    }
-  );
+Deno.test('daysElapsed returns {days: 0, ...} for same day', () => {
+  const {days} = daysElapsed([
+    new Date(Date.UTC(2020, 0, 1)),
+    new Date(Date.UTC(2020, 0, 1)),
+  ]);
+  assertStrictEquals(days, 0);
 });
 
-Deno.test('daysBetweenDates [2 args] leap year', () => {
-  assertEquals(
-    daysBetweenDates('2020-02-28', '2020-03-01'),
-    {
-      days: 2,
-      startDate: '2020-02-28',
-      endDate: '2020-03-01',
-    }
-  );
+Deno.test('daysElapsed returns {days: 1, ...} for 1-day future offset', () => {
+  const {days} = daysElapsed([
+    new Date(Date.UTC(2020, 0, 1)),
+    new Date(Date.UTC(2020, 0, 2)),
+  ]);
+  assertStrictEquals(days, 1);
 });
 
-Deno.test('daysBetweenDates [2 args] non-leap year', () => {
-  assertEquals(
-    daysBetweenDates('2019-02-28', '2019-03-01'),
-    {
-      days: 1,
-      startDate: '2019-02-28',
-      endDate: '2019-03-01',
-    }
-  );
+Deno.test('daysElapsed returns {days: -1, ...} for 1-day past offset', () => {
+  const {days} = daysElapsed([
+    new Date(Date.UTC(2020, 0, 1)),
+    new Date(Date.UTC(2019, 11, 31)),
+  ]);
+  assertStrictEquals(days, -1);
 });
 
-Deno.test('daysBetweenDates [2 args] daylight saving', () => {
-  /*
-   * NOTE: These tests are inherently imperfect, because they depend on the
-   * locale where the test is executed to observe Daylight Saving Time
-   *
-   * Reference for dates by country for which Daylight Saving is observed:
-   * https://en.wikipedia.org/wiki/Daylight_saving_time_by_country
-   */
-
-  // For countries that observe Daylight Saving, January 1 and August 1 are on
-  // different sides of the transition for every country except Western Sahara,
-  // which only has a 1-month window
-  assertEquals(
-    daysBetweenDates('2020-01-01', '2020-08-01'),
-    {
-      days: 213, // Must be an integer
-      startDate: '2020-01-01',
-      endDate: '2020-08-01',
-    }
-  );
-
-  // Western Sahara is on Standard Time only from April 20 through May 30th,
-  // So May 1 is on Standard Time and June 1 is on Daylight Saving Time
-  assertEquals(
-    daysBetweenDates('2020-05-01', '2020-06-01'),
-    {
-      days: 31, // Must be an integer
-      startDate: '2020-05-01',
-      endDate: '2020-06-01',
-    }
-  );
+Deno.test('daysElapsed handles leap year', () => {
+  const {days} = daysElapsed([
+    new Date(Date.UTC(2020, 1, 28)),
+    new Date(Date.UTC(2020, 2, 1)),
+  ]);
+  assertStrictEquals(days, 2);
 });
 
-/**
- * Tests which call `daysBetweenDates()` with 1 argument
- *
- * These are contained in an IIFE so that the function-under-test's implicit
- * use of its execution date can be validated.
- */
-(() => {
-  function isoString(date: Date, dayOffset: number = 0) {
-    const newDate = new Date(
-      Date.UTC(date.getFullYear(), date.getMonth(), date.getDate())
-    );
-    newDate.setUTCDate(newDate.getUTCDate() + dayOffset);
-    const newDateISO = newDate.toISOString().slice(0, 10); // 'yyyy-mm-dd'
-    return newDateISO;
-  }
+Deno.test('daysElapsed handles non-leap year', () => {
+  const {days} = daysElapsed([
+    new Date(Date.UTC(2019, 1, 28)),
+    new Date(Date.UTC(2019, 2, 1)),
+  ]);
+  assertStrictEquals(days, 1);
+});
 
-  const now = new Date();
-  const nowUTC = new Date(
-    Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
-  );
-  const nowISO = isoString(now);
-  const testStartDate = now.getUTCDate();
-
-  Deno.test('daysBetweenDates [1 arg] same day', () => {
-    assertEquals(
-      daysBetweenDates(isoString(now, 0)),
-      {
-        days: 0,
-        startDate: nowISO,
-        endDate: isoString(now, 0),
-      }
-    );
+Deno.test('datesToISOStrings does not modify {days}', () => {
+  const {days} = datesToISOStrings({
+    start: new Date(Date.UTC(2020, 0, 1)),
+    end: new Date(Date.UTC(2020, 0, 2)),
+    days: 42, // Definitely incorrect for the given dates
   });
-
-  Deno.test('daysBetweenDates [1 arg] future date', () => {
-    assertEquals(
-      daysBetweenDates(isoString(now, 1)),
-      {
-        days: 1,
-        startDate: nowISO,
-        endDate: isoString(now, 1),
-      }
-    );
-  });
-
-  Deno.test('daysBetweenDates [1 arg] past date', () => {
-    assertEquals(
-      daysBetweenDates(isoString(now, -1)),
-      {
-        days: -1,
-        startDate: nowISO,
-        endDate: isoString(now, -1),
-      }
-    );
-  });
-
-  (() => {
-    const nowTzOffset = now.getTimezoneOffset();
-    const MS_IN_DAY = 1000 * 60 * 60 * 24;
-    const DAYS_IN_LEAP_YEAR = 366;
-    let otherDate: Date;
-    let hasDaylightSaving = false;
-
-    for (let dayOffset = 1; dayOffset < DAYS_IN_LEAP_YEAR; dayOffset += 1) {
-      otherDate = new Date(now.getTime() + MS_IN_DAY * dayOffset);
-
-      if (otherDate.getTimezoneOffset() !== nowTzOffset) {
-        hasDaylightSaving = true;
-        break;
-      }
-    }
-
-    Deno.test({
-      name: 'daysBetweenDates [1 arg] daylight saving',
-      ignore: !hasDaylightSaving,
-      fn() {
-        const otherDateISO = isoString(otherDate);
-        const {days} = daysBetweenDates(otherDateISO);
-        assert(
-          days % 1 === 0,
-          `daysBetweenDates('${otherDateISO}').days is not an integer: ${days}`
-        );
-      },
-    });
-  })();
-
-  const testEndDate = new Date().getUTCDate();
-
-  if (testStartDate !== testEndDate) {
-    throw new Error(
-      'Invalid test run: UTC date changed during test. Please run test again.'
-    );
-  }
-})();
-
-Deno.test('daysBetweenDates throws (invalid format)', () => {
-  for (const date of INVALID_DATE_FORMATS) {
-    assertThrows(
-      () => {
-        daysBetweenDates(date)
-      },
-      DateParseError,
-      'Invalid date format:',
-      `daysBetweenDates('${date}')`
-    );
-    assertThrows(
-      () => {
-        daysBetweenDates(date, date)
-      },
-      DateParseError,
-      'Invalid date format:',
-      `daysBetweenDates('${date}', '${date}')`
-    );
-  }
+  assertStrictEquals(days, 42); // ...but is returned unchanged
 });
 
-Deno.test('daysBetweenDates throws (invalid date)', () => {
-  for (const date of INVALID_DATES) {
-    assertThrows(
-      () => {
-        daysBetweenDates(date)
-      },
-      DateParseError,
-      'Invalid date:',
-      `daysBetweenDates('${date}')`
-    );
-    assertThrows(
-      () => {
-        daysBetweenDates(date, date)
-      },
-      DateParseError,
-      'Invalid date:',
-      `daysBetweenDates('${date}', '${date}')`
-    );
-  }
+Deno.test('datesToISOStrings translates {start, end} to ISO strings', () => {
+  const {startISO, endISO} = datesToISOStrings({
+    start: new Date(Date.UTC(999, 0, 1)),
+    end: new Date(Date.UTC(2020, 11, 31)),
+    days: 0, // Irrelevant for this test
+  });
+  assertStrictEquals(startISO, '0999-01-01');
+  assertStrictEquals(endISO, '2020-12-31');
 });
