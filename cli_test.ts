@@ -17,8 +17,8 @@ const mockFn: typeof daysBetweenDates = (arg1: string, arg2?: string) => {
 
   return {
     days: MOCK_DAYS,
-    startDate: arg1,
-    endDate: arg2 ?? OMITTED_DATE,
+    startISO: arg1,
+    endISO: arg2 ?? OMITTED_DATE,
   };
 };
 

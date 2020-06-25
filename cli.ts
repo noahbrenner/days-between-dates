@@ -50,10 +50,10 @@ export function cli(
     }
   }
 
-  const {days, startDate, endDate} = result;
+  const {days, startISO, endISO} = result;
 
   return {
-    message: `${startDate} – ${endDate}: ${days} days`,
+    message: `${startISO} – ${endISO}: ${days} days`,
     exitCode: 0,
   };
 }
